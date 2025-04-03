@@ -1,30 +1,20 @@
 const room = HBInit({
     roomName: "🏐 [VHPL] VOLLEYBALL [BETA TEST]",
     maxPlayers: 24,
-    noPlayer: true, // what is that for
+    noPlayer: true,
     geo: {"code" : "CA", "lat": 43.651070, "lon": -79.347015}
 })
 
 // ========> DATABASE COLLECTION <======== //
 
-var superAdmins;
-if (localStorage.getItem("VHPL.superAdmins") == null) {
-    superAdmins = [
-        "IZ74AeQVaSn9oZl1ubkXGQYi2AaezQkrDG0Nj2kIvqI", // stacks auth
-        "EVRdfD9nj3X0UpUuxfSxoSSaCXD-WSkKLPplHSjcnrQ" // alex auth
-    ]
-    localStorage.setItem("VHPL.superAdmins", JSON.stringify(superAdmins))
-} else {
-    superAdmins = localStorage.getItem("VHPL.superAdmins")
-}
+var authArray = []
 
-var pubAdmins;
-if (localStorage.getItem("VHPL.pubAdmins") == null) {
-    pubAdmins = []
-    localStorage.setItem("VHPL.pubAdmins", JSON.stringify(pubAdmins))
-} else {
-    pubAdmins = localStorage.getItem("VHPL.pubAdmins")
-}
+var masterAdmins = [
+    "IZ74AeQVaSn9oZl1ubkXGQYi2AaezQkrDG0Nj2kIvqI" //stacjs
+    //"" // alelelexe.
+]
+
+var pubAdmins = [];
 
 // ========> VARIABLES <======== //
 
@@ -49,13 +39,59 @@ const hexColor = {
     green: 0x1dde20,
 };
 
+function announce(msg, targetId, color, style, sound) {
+    if (color == null) {
+        color = 0xFFFD82;
+    }
+    if (style == null) {
+        style = "bold";
+    }
+    if (sound == null) {
+        sound = 0;
+    }
+    room.sendAnnouncement(msg, targetId, color, style, sound);
+    console.log("Announce: " + msg);
+}
+
+function whisper(msg, targetId, color, style, sound) {
+    if (color == null) {
+        color = 0x66C7FF;
+    }
+    if (style == null) {
+        style = "normal";
+    }
+    if (sound == null) {
+        sound = 0;
+    }
+    room.sendAnnouncement(msg, targetId, color, style, sound);
+    if (room.getPlayer(targetId) != null) {
+        console.log("Whisper -> " + room.getPlayer(targetId).name + ": " + msg);
+    }
+}
 
 // ========> GAME FUNCTIONS <======== //
 
 room.onPlayerJoin = async function (player) {
-    if (roomPlayerData.find(x => x.auth == player.auth)) {
-        roomPlayerData.splice(roomPlayerData.indexOf(roomPlayerData.find(x => x.auth == player.auth),1))
+    console.log(`${player.name} joined`);
+    whisper(`Welcome to VHPL, enter !help for available commands`,player.id)
+
+    if (masterAdmins.findIndex((auth) => auth == player.auth) != -1) {
+        masterAdmins.push(player.id);
+        announce(`Master Admin ${player.name} has joined.`);
+        room.setPlayerAdmin(player.id, true);
     }
-    roomPlayerData.push({id: player.id, name: player.name, auth: player.auth, conn: player.conn, afk: false, mute: false, status: 0})
-    room.sendAnnouncement()
+    if (pubAdmins.findIndex((auth) => auth == player.auth) != -1) {
+        pubAdmins.push(player.id);
+        announce(`Admin ${player.name} has joined.`);
+        room.setPlayerAdmin(player.id,true);
+    }
+    var players = room.getPlayerList().filter((player) => player.id != 0);
+}
+
+room.onPlayerLeave = function (player) {
+    console.log(`${player.name} has left.`)
+}
+
+room.onPlayerChat = function (message, player) {
+    
 }
